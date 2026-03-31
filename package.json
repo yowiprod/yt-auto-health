@@ -1,0 +1,27 @@
+# Anthropic (Claude)
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# ElevenLabs
+ELEVENLABS_API_KEY=your-key-here
+ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM
+
+# OpenAI (DALL-E 3)
+OPENAI_API_KEY=sk-your-key-here
+
+# Pexels
+PEXELS_API_KEY=your-key-here
+
+# Creatomate
+CREATOMATE_API_KEY=your-key-here
+CREATOMATE_TEMPLATE_ID=your-template-id-here
+
+# YouTube OAuth2
+YOUTUBE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+YOUTUBE_CLIENT_SECRET=your-client-secret
+
+# Telegram
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_CHAT_ID=your-chat-id
+
+# n8n
+N8N_WEBHOOK_URL=http://localhost:5678
