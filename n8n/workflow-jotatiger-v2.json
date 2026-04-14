@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\n// Limpiar script\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// Keywords para Pexels\nconst keywords = ['gym workout', 'fitness training', 'healthy food'];\n\n// Titulo del video - buscar linea que no sea vacia ni solo simbolos\nconst lines = script.split('\\n').filter(l => l.trim().length > 5);\nlet title = '';\nfor (const line of lines) {\n  const clean = line.replace(/^[#*\\-_\"\\s]+/, '').replace(/[*_\"]+$/, '').trim();\n  if (clean.length > 10 && !clean.toLowerCase().includes('introduccion') && !clean.toLowerCase().includes('introducción')) {\n    title = clean.substring(0, 100);\n    break;\n  }\n}\nif (!title) title = '3 errores que te impiden perder grasa';\n\n// Preparar body para HeyGen\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: cleanScript.substring(0, 1500),\n      voice_id: 'Efrayn'\n    }\n  }],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title,\n    brollKeyword: keywords[0],\n    playlist: 'Consejos Directos',\n    heygenBody: heygenBody\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\n// Limpiar script\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// Keywords para Pexels\nconst keywords = ['gym workout', 'fitness training', 'healthy food'];\n\n// Titulo del video\nconst lines = script.split('\\n').filter(l => l.trim().length > 5);\nlet title = '';\nfor (const line of lines) {\n  const clean = line.replace(/^[#*\\-_\"\\s]+/, '').replace(/[*_\"]+$/, '').trim();\n  if (clean.length > 10 && !clean.toLowerCase().includes('introduccion') && !clean.toLowerCase().includes('introducción')) {\n    title = clean.substring(0, 100);\n    break;\n  }\n}\nif (!title) title = '3 errores que te impiden perder grasa';\n\n// Descripcion para YouTube\nconst description = `${cleanScript.substring(0, 500)}...\\n\\n🔔 Suscríbete para más consejos de fitness\\n\\n#fitness #salud #perdergrasa #ejercicio #nutricion`;\n\n// Preparar body para HeyGen\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: cleanScript.substring(0, 1500),\n      voice_id: 'Efrayn'\n    }\n  }],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title,\n    description: description,\n    brollKeyword: keywords[0],\n    playlist: 'Consejos Directos',\n    heygenBody: heygenBody\n  }\n}];"
       },
       "id": "node-process",
       "name": "Procesar Script",
@@ -88,11 +88,11 @@
     },
     {
       "parameters": {
-        "amount": 360,
+        "amount": 900,
         "unit": "seconds"
       },
       "id": "node-wait",
-      "name": "Esperar 6 minutos",
+      "name": "Esperar 15 minutos",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [1000, 300]
@@ -121,6 +121,32 @@
     },
     {
       "parameters": {
+        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nreturn [{\n  json: {\n    videoUrl: videoUrl,\n    status: status,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist,\n    videoReady: status === 'completed' && videoUrl !== null\n  }\n}];"
+      },
+      "id": "node-check-video",
+      "name": "Verificar Video Listo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8293761480:AAGcRLwZ5p0OJ_H6eRSK_Rq0rt3iDRB20S8/sendMessage",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video listo!\\n\\n📹 Titulo: \" + $json.title + \"\\n\\n🔗 URL HeyGen: \" + ($json.videoUrl || 'Procesando...') + \"\\n\\n📋 Playlist: \" + $json.playlist + \"\\n\\n⏳ Estado: \" + $json.status + \"\\n\\n✅ Listo para subir a YouTube, Instagram y TikTok\"}) }}",
+        "options": {}
+      },
+      "id": "node-telegram",
+      "name": "Telegram - Notificacion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1750, 300]
+    },
+    {
+      "parameters": {
         "method": "GET",
         "url": "={{ \"https://api.pexels.com/videos/search?query=\" + $('Procesar Script').first().json.brollKeyword + \"&per_page=3&orientation=landscape\" }}",
         "authentication": "none",
@@ -140,22 +166,6 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [750, 500]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8293761480:AAGcRLwZ5p0OJ_H6eRSK_Rq0rt3iDRB20S8/sendMessage",
-        "authentication": "none",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"Video generado!\\n\\nTitulo: \" + $('Procesar Script').first().json.title + \"\\n\\nURL: \" + $('HeyGen - Estado Video').first().json.data.video_url + \"\\n\\nPlaylist: \" + $('Procesar Script').first().json.playlist}) }}",
-        "options": {}
-      },
-      "id": "node-telegram",
-      "name": "Telegram - Notificacion",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1500, 300]
     }
   ],
   "connections": {
@@ -172,12 +182,15 @@
       ]]
     },
     "HeyGen - Crear Video": {
-      "main": [[{"node": "Esperar 3 minutos", "type": "main", "index": 0}]]
+      "main": [[{"node": "Esperar 15 minutos", "type": "main", "index": 0}]]
     },
-    "Esperar 6 minutos": {
+    "Esperar 15 minutos": {
       "main": [[{"node": "HeyGen - Estado Video", "type": "main", "index": 0}]]
     },
     "HeyGen - Estado Video": {
+      "main": [[{"node": "Verificar Video Listo", "type": "main", "index": 0}]]
+    },
+    "Verificar Video Listo": {
       "main": [[{"node": "Telegram - Notificacion", "type": "main", "index": 0}]]
     }
   },
