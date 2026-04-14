@@ -144,7 +144,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.telegram.org/bot8684753274:AAE9UeSMSgkYcSR4Vm2OX6Nuc9r6mcTkL9c/sendMessage",
+        "url": "https://api.telegram.org/bot8293761480:AAGcRLwZ5p0OJ_H6eRSK_Rq0rt3iDRB20S8/sendMessage",
         "authentication": "none",
         "sendBody": true,
         "specifyBody": "json",
