@@ -1,0 +1,187 @@
+{
+  "name": "JOTATIGER.FIT - Auto YouTube",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres Juan Fit, experto en fitness. Hablas en español de España. Generas scripts de 800-1000 palabras para YouTube. Tono directo y cercano. Usa [PAUSA] entre secciones.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Genera un script sobre: 3 errores que te impiden perder grasa y como corregirlos hoy.\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2000\n}",
+        "options": {}
+      },
+      "id": "node-groq",
+      "name": "Groq - Generar Script",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\n// Limpiar script - quitar marcadores y saltos de linea multiples\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// Keywords para Pexels\nconst keywords = ['gym workout', 'fitness training', 'healthy food'];\n\n// Titulo del video\nconst lines = script.split('\\n').filter(l => l.trim().length > 0);\nconst title = lines[0].replace(/^[#*\"]+\\s*/, '').trim().substring(0, 100);\n\n// Preparar body para HeyGen\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: cleanScript.substring(0, 1500),\n      voice_id: 'Efrayn'\n    }\n  }],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title || '3 errores que te impiden perder grasa',\n    brollKeyword: keywords[0],\n    playlist: 'Consejos Directos',\n    heygenBody: heygenBody\n  }\n}];"
+      },
+      "id": "node-process",
+      "name": "Procesar Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.heygenBody }}",
+        "options": {}
+      },
+      "id": "node-heygen",
+      "name": "HeyGen - Crear Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "amount": 180,
+        "unit": "seconds"
+      },
+      "id": "node-wait",
+      "name": "Esperar 3 minutos",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ \"https://api.heygen.com/v1/video_status.get?video_id=\" + $('HeyGen - Crear Video').first().json.data.video_id }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-heygen-status",
+      "name": "HeyGen - Estado Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ \"https://api.pexels.com/videos/search?query=\" + $('Procesar Script').first().json.brollKeyword + \"&per_page=3&orientation=landscape\" }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "v5FIMWFvv0EGjPzfHV676zJKTox06wm9LnzF7YJDIwzGbDTl9tWQ7yOT"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-pexels",
+      "name": "Pexels - Buscar B-Roll",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8684753274:AAE9UeSMSgkYcSR4Vm20X6Nuc9r6mcTkL9c/sendMessage",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8684753274\", \"text\": \"Video generado!\\n\\nTitulo: \" + $('Procesar Script').first().json.title + \"\\n\\nURL: \" + $('HeyGen - Estado Video').first().json.data.video_url + \"\\n\\nPlaylist: \" + $('Procesar Script').first().json.playlist}) }}",
+        "options": {}
+      },
+      "id": "node-telegram",
+      "name": "Telegram - Notificacion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{"node": "Groq - Generar Script", "type": "main", "index": 0}]]
+    },
+    "Groq - Generar Script": {
+      "main": [[{"node": "Procesar Script", "type": "main", "index": 0}]]
+    },
+    "Procesar Script": {
+      "main": [[
+        {"node": "HeyGen - Crear Video", "type": "main", "index": 0},
+        {"node": "Pexels - Buscar B-Roll", "type": "main", "index": 0}
+      ]]
+    },
+    "HeyGen - Crear Video": {
+      "main": [[{"node": "Esperar 3 minutos", "type": "main", "index": 0}]]
+    },
+    "Esperar 3 minutos": {
+      "main": [[{"node": "HeyGen - Estado Video", "type": "main", "index": 0}]]
+    },
+    "HeyGen - Estado Video": {
+      "main": [[{"node": "Telegram - Notificacion", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
