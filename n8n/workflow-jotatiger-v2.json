@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\n// Limpiar script - quitar marcadores y saltos de linea multiples\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// Keywords para Pexels\nconst keywords = ['gym workout', 'fitness training', 'healthy food'];\n\n// Titulo del video\nconst lines = script.split('\\n').filter(l => l.trim().length > 0);\nconst title = lines[0].replace(/^[#*\"]+\\s*/, '').trim().substring(0, 100);\n\n// Preparar body para HeyGen\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: cleanScript.substring(0, 1500),\n      voice_id: 'Efrayn'\n    }\n  }],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title || '3 errores que te impiden perder grasa',\n    brollKeyword: keywords[0],\n    playlist: 'Consejos Directos',\n    heygenBody: heygenBody\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\n// Limpiar script\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// Keywords para Pexels\nconst keywords = ['gym workout', 'fitness training', 'healthy food'];\n\n// Titulo del video - buscar linea que no sea vacia ni solo simbolos\nconst lines = script.split('\\n').filter(l => l.trim().length > 5);\nlet title = '';\nfor (const line of lines) {\n  const clean = line.replace(/^[#*\\-_\"\\s]+/, '').replace(/[*_\"]+$/, '').trim();\n  if (clean.length > 10 && !clean.toLowerCase().includes('introduccion') && !clean.toLowerCase().includes('introducción')) {\n    title = clean.substring(0, 100);\n    break;\n  }\n}\nif (!title) title = '3 errores que te impiden perder grasa';\n\n// Preparar body para HeyGen\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: cleanScript.substring(0, 1500),\n      voice_id: 'Efrayn'\n    }\n  }],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title,\n    brollKeyword: keywords[0],\n    playlist: 'Consejos Directos',\n    heygenBody: heygenBody\n  }\n}];"
       },
       "id": "node-process",
       "name": "Procesar Script",
@@ -88,11 +88,11 @@
     },
     {
       "parameters": {
-        "amount": 180,
+        "amount": 360,
         "unit": "seconds"
       },
       "id": "node-wait",
-      "name": "Esperar 3 minutos",
+      "name": "Esperar 6 minutos",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [1000, 300]
