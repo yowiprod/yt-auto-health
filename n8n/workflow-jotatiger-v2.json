@@ -174,7 +174,7 @@
     "HeyGen - Crear Video": {
       "main": [[{"node": "Esperar 3 minutos", "type": "main", "index": 0}]]
     },
-    "Esperar 3 minutos": {
+    "Esperar 6 minutos": {
       "main": [[{"node": "HeyGen - Estado Video", "type": "main", "index": 0}]]
     },
     "HeyGen - Estado Video": {
