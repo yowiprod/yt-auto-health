@@ -148,7 +148,7 @@
         "authentication": "none",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8684753274\", \"text\": \"Video generado!\\n\\nTitulo: \" + $('Procesar Script').first().json.title + \"\\n\\nURL: \" + $('HeyGen - Estado Video').first().json.data.video_url + \"\\n\\nPlaylist: \" + $('Procesar Script').first().json.playlist}) }}",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"Video generado!\\n\\nTitulo: \" + $('Procesar Script').first().json.title + \"\\n\\nURL: \" + $('HeyGen - Estado Video').first().json.data.video_url + \"\\n\\nPlaylist: \" + $('Procesar Script').first().json.playlist}) }}",
         "options": {}
       },
       "id": "node-telegram",
