@@ -131,19 +131,61 @@
     },
     {
       "parameters": {
+        "method": "GET",
+        "url": "={{ $json.videoUrl }}",
+        "authentication": "none",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "node-download-video",
+      "name": "Descargar Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1750, 300]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "title": "={{ $('Procesar Script').first().json.title }}",
+        "regionCode": "ES",
+        "categoryId": "27",
+        "options": {
+          "description": "={{ $('Procesar Script').first().json.description }}",
+          "privacyStatus": "public"
+        }
+      },
+      "id": "node-youtube-upload",
+      "name": "Subir Video a YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [2000, 300],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "youtube-oauth2",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://api.telegram.org/bot8293761480:AAGcRLwZ5p0OJ_H6eRSK_Rq0rt3iDRB20S8/sendMessage",
         "authentication": "none",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video listo!\\n\\n📹 Titulo: \" + $json.title + \"\\n\\n🔗 URL HeyGen: \" + ($json.videoUrl || 'Procesando...') + \"\\n\\n📋 Playlist: \" + $json.playlist + \"\\n\\n⏳ Estado: \" + $json.status + \"\\n\\n✅ Listo para subir a YouTube, Instagram y TikTok\"}) }}",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video publicado en YouTube!\\n\\n📹 Titulo: \" + $('Procesar Script').first().json.title + \"\\n\\n🔗 YouTube: https://youtube.com/watch?v=\" + $json.id + \"\\n\\n📋 Playlist: \" + $('Procesar Script').first().json.playlist + \"\\n\\n✅ Sube a TikTok e Instagram via Publer\"}) }}",
         "options": {}
       },
       "id": "node-telegram",
       "name": "Telegram - Notificacion",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1750, 300]
+      "position": [2250, 300]
     },
     {
       "parameters": {
@@ -191,6 +233,12 @@
       "main": [[{"node": "Verificar Video Listo", "type": "main", "index": 0}]]
     },
     "Verificar Video Listo": {
+      "main": [[{"node": "Descargar Video", "type": "main", "index": 0}]]
+    },
+    "Descargar Video": {
+      "main": [[{"node": "Subir Video a YouTube", "type": "main", "index": 0}]]
+    },
+    "Subir Video a YouTube": {
       "main": [[{"node": "Telegram - Notificacion", "type": "main", "index": 0}]]
     }
   },
