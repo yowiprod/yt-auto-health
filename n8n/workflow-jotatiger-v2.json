@@ -1,5 +1,5 @@
 {
-  "name": "JOTATIGER.FIT - Auto YouTube",
+  "name": "JOTATIGER.FIT - Auto YouTube v2 (con B-Roll)",
   "nodes": [
     {
       "parameters": {
@@ -49,13 +49,45 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\n// Limpiar script\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// Keywords para Pexels\nconst keywords = ['gym workout', 'fitness training', 'healthy food'];\n\n// Titulo del video\nconst lines = script.split('\\n').filter(l => l.trim().length > 5);\nlet title = '';\nfor (const line of lines) {\n  const clean = line.replace(/^[#*\\-_\"\\s]+/, '').replace(/[*_\"]+$/, '').trim();\n  if (clean.length > 10 && !clean.toLowerCase().includes('introduccion') && !clean.toLowerCase().includes('introducción')) {\n    title = clean.substring(0, 100);\n    break;\n  }\n}\nif (!title) title = '3 errores que te impiden perder grasa';\n\n// Descripcion para YouTube\nconst description = `${cleanScript.substring(0, 500)}...\\n\\n🔔 Suscríbete para más consejos de fitness\\n\\n#fitness #salud #perdergrasa #ejercicio #nutricion`;\n\n// Preparar body para HeyGen\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: cleanScript.substring(0, 1500),\n      voice_id: '64cde72345cb463c9719781063d87787'\n    }\n  }],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title,\n    description: description,\n    brollKeyword: keywords[0],\n    playlist: 'Consejos Directos',\n    heygenBody: heygenBody\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\nconst keywords = ['gym workout', 'fitness training', 'weight loss exercise'];\n\nconst lines = script.split('\\n').filter(l => l.trim().length > 5);\nlet title = '';\nfor (const line of lines) {\n  const clean = line.replace(/^[#*\\-_\"\\s]+/, '').replace(/[*_\"]+$/, '').trim();\n  if (clean.length > 10 && !clean.toLowerCase().includes('introduccion') && !clean.toLowerCase().includes('introducción')) {\n    title = clean.substring(0, 100);\n    break;\n  }\n}\nif (!title) title = '3 errores que te impiden perder grasa';\n\nconst description = `${cleanScript.substring(0, 500)}...\\n\\n🔔 Suscríbete para más consejos de fitness\\n👉 Sígueme en TikTok e Instagram: @juan.fit.tiger\\n\\n#fitness #salud #perdergrasa #ejercicio #nutricion #entrenamiento #juanfit`;\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title,\n    description: description,\n    brollKeyword: keywords[0],\n    playlist: 'Consejos Directos'\n  }\n}];"
       },
       "id": "node-process",
       "name": "Procesar Script",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ \"https://api.pexels.com/videos/search?query=\" + $json.brollKeyword + \"&per_page=5&orientation=landscape\" }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "v5FIMWFvv0EGjPzfHV676zJKTox06wm9LnzF7YJDIwzGbDTl9tWQ7yOT"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-pexels",
+      "name": "Pexels - Buscar B-Roll",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pexelsData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst videos = pexelsData.videos || [];\nlet brollUrl = null;\n\nif (videos.length > 0) {\n  const video = videos[0];\n  const files = video.video_files || [];\n  const hdFile = files.find(f => f.quality === 'hd' && f.width >= 1280);\n  const sdFile = files.find(f => f.quality === 'sd');\n  const chosen = hdFile || sdFile || files[0];\n  if (chosen) brollUrl = chosen.link;\n}\n\nconst heygenInputs = {\n  character: {\n    type: 'avatar',\n    avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n    avatar_style: 'normal'\n  },\n  voice: {\n    type: 'text',\n    input_text: scriptData.cleanScript,\n    voice_id: '64cde72345cb463c9719781063d87787'\n  }\n};\n\nif (brollUrl) {\n  heygenInputs.background = {\n    type: 'video',\n    video: {\n      url: brollUrl,\n      play_style: 'loop'\n    }\n  };\n}\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [heygenInputs],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    heygenBody: heygenBody,\n    brollUrl: brollUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
+      },
+      "id": "node-preparar-heygen",
+      "name": "Preparar HeyGen con B-Roll",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300]
     },
     {
       "parameters": {
@@ -84,7 +116,7 @@
       "name": "HeyGen - Crear Video",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [750, 300]
+      "position": [1250, 300]
     },
     {
       "parameters": {
@@ -95,12 +127,12 @@
       "name": "Esperar 15 minutos",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [1000, 300]
+      "position": [1500, 300]
     },
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ \"https://api.heygen.com/v1/video_status.get?video_id=\" + $('HeyGen - Crear Video').first().json.data.video_id }}",
+        "url": "={{ (() => { const vid = $('HeyGen - Crear Video').first().json?.data?.video_id; if (!vid) throw new Error('HeyGen no devolvió video_id. Revisa la respuesta del nodo HeyGen - Crear Video.'); return 'https://api.heygen.com/v1/video_status.get?video_id=' + vid; })() }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
@@ -117,17 +149,17 @@
       "name": "HeyGen - Estado Video",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1250, 300]
+      "position": [1750, 300]
     },
     {
       "parameters": {
-        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nreturn [{\n  json: {\n    videoUrl: videoUrl,\n    status: status,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist,\n    videoReady: status === 'completed' && videoUrl !== null\n  }\n}];"
+        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst prepData = $('Preparar HeyGen con B-Roll').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nif (status === 'failed') {\n  throw new Error('HeyGen: el video falló. Revisa los parámetros.');\n}\nif (status !== 'completed' || !videoUrl) {\n  throw new Error(`HeyGen: video aún no listo (estado: ${status}). Espera más y vuelve a ejecutar desde \"HeyGen - Estado Video\".`);\n}\n\nreturn [{\n  json: {\n    videoUrl: videoUrl,\n    status: status,\n    title: prepData.title,\n    description: prepData.description,\n    playlist: prepData.playlist\n  }\n}];"
       },
       "id": "node-check-video",
       "name": "Verificar Video Listo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1500, 300]
+      "position": [2000, 300]
     },
     {
       "parameters": {
@@ -146,16 +178,16 @@
       "name": "Descargar Video",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1750, 300]
+      "position": [2250, 300]
     },
     {
       "parameters": {
         "resource": "video",
-        "title": "={{ $('Procesar Script').first().json.title }}",
+        "title": "={{ $('Verificar Video Listo').first().json.title }}",
         "regionCode": "ES",
         "categoryId": "27",
         "options": {
-          "description": "={{ $('Procesar Script').first().json.description }}",
+          "description": "={{ $('Verificar Video Listo').first().json.description }}",
           "privacyStatus": "public"
         }
       },
@@ -163,7 +195,7 @@
       "name": "Subir Video a YouTube",
       "type": "n8n-nodes-base.youTube",
       "typeVersion": 1,
-      "position": [2000, 300],
+      "position": [2500, 300],
       "credentials": {
         "youTubeOAuth2Api": {
           "id": "youtube-oauth2",
@@ -178,36 +210,14 @@
         "authentication": "none",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video publicado en YouTube!\\n\\n📹 Titulo: \" + $('Procesar Script').first().json.title + \"\\n\\n🔗 YouTube: https://youtube.com/watch?v=\" + $json.id + \"\\n\\n📋 Playlist: \" + $('Procesar Script').first().json.playlist + \"\\n\\n✅ Sube a TikTok e Instagram via Publer\"}) }}",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video publicado en YouTube!\\n\\n📹 Titulo: \" + $('Verificar Video Listo').first().json.title + \"\\n\\n🔗 YouTube: https://youtube.com/watch?v=\" + $json.id + \"\\n\\n🎥 B-Roll: \" + ($('Preparar HeyGen con B-Roll').first().json.brollUrl ? 'Sí, incluido como fondo' : 'No disponible') + \"\\n\\n📋 Playlist: \" + $('Verificar Video Listo').first().json.playlist}) }}",
         "options": {}
       },
       "id": "node-telegram",
       "name": "Telegram - Notificacion",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2250, 300]
-    },
-    {
-      "parameters": {
-        "method": "GET",
-        "url": "={{ \"https://api.pexels.com/videos/search?query=\" + $('Procesar Script').first().json.brollKeyword + \"&per_page=3&orientation=landscape\" }}",
-        "authentication": "none",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "v5FIMWFvv0EGjPzfHV676zJKTox06wm9LnzF7YJDIwzGbDTl9tWQ7yOT"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "node-pexels",
-      "name": "Pexels - Buscar B-Roll",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [750, 500]
+      "position": [2750, 300]
     }
   ],
   "connections": {
@@ -218,10 +228,13 @@
       "main": [[{"node": "Procesar Script", "type": "main", "index": 0}]]
     },
     "Procesar Script": {
-      "main": [[
-        {"node": "HeyGen - Crear Video", "type": "main", "index": 0},
-        {"node": "Pexels - Buscar B-Roll", "type": "main", "index": 0}
-      ]]
+      "main": [[{"node": "Pexels - Buscar B-Roll", "type": "main", "index": 0}]]
+    },
+    "Pexels - Buscar B-Roll": {
+      "main": [[{"node": "Preparar HeyGen con B-Roll", "type": "main", "index": 0}]]
+    },
+    "Preparar HeyGen con B-Roll": {
+      "main": [[{"node": "HeyGen - Crear Video", "type": "main", "index": 0}]]
     },
     "HeyGen - Crear Video": {
       "main": [[{"node": "Esperar 15 minutos", "type": "main", "index": 0}]]
