@@ -1,16 +1,22 @@
-# SEO Description Prompt
+# Prompt: Generador de Títulos SEO — JOTATIGER.FIT
+
+Usa este prompt en el nodo de Groq API en n8n.
 
 ```
-Write a YouTube description for: {title}
-SEO keywords: {tags}
+Genera 5 variaciones de título para YouTube para el canal JOTATIGER.FIT.
 
-Structure:
-- Line 1: compelling hook sentence
-- Line 2: what they will learn
-- WHAT YOU'LL LEARN: 3 bullet points
-- TIMESTAMPS: 0:00 intro, 1:15 section1, 3:30 section2, 5:45 section3, 7:00 takeaways
-- Subscribe CTA
-- 15 relevant hashtags
+Tema: {topic}
+Playlist: {playlist}
 
-Total: 300-400 words
+REQUISITOS:
+- Máximo 60 caracteres
+- En español
+- Incluye número cuando sea relevante (ej: "5 errores", "3 pasos")
+- Usa palabras de impacto: Error / Nadie te dice / La verdad sobre /
+  Por qué no / Deja de / Secreto / Lo que funciona de verdad
+- Sin clickbait falso — el título debe reflejar el contenido real
+- Lenguaje directo, no académico
+
+FORMATO: Array JSON de strings únicamente, sin explicaciones.
+["Título 1", "Título 2", "Título 3", "Título 4", "Título 5"]
 ```

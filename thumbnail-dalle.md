@@ -1,12 +1,28 @@
-# Title Generator Prompt
+# Prompt: Thumbnail con DALL-E 3 — JOTATIGER.FIT
+
+Usa este prompt en el nodo de OpenAI (DALL-E 3) en n8n.
 
 ```
-Generate 5 YouTube title variations for a video about: {topic}
+YouTube thumbnail para el canal de fitness y salud JOTATIGER.FIT.
 
-Requirements:
-- Under 60 characters
-- Include a number when possible
-- Use power words: Secret, Nobody, Finally, Warning, Truth
+Tema del vídeo: {title}
+Playlist: {playlist}
 
-Format: JSON array of strings.
+ESTILO VISUAL OBLIGATORIO:
+- Hombre atlético musculado, 32-38 años, piel mediterránea, pelo corto oscuro
+- Expresión intensa mirando a cámara, adaptada al tema del vídeo
+- Fondo: degradado oscuro negro a verde esmeralda, o gym con iluminación dramática
+- Iluminación: contraluz o lateral fuerte, cinematográfica
+- Colores dominantes: negro, verde neón, blanco
+- Fotorrealista, ultra HD, 1792x1024px
+- NO incluyas texto en la imagen
+- NO incluyas logos ni marcas
+
+Adapta postura al tema:
+- Pérdida de grasa: señalando al abdomen
+- Músculo: postura de fuerza, bíceps visible
+- Motivación: mirada intensa, puño cerrado
+- Comida: gesto de aprobación
+- Complementos: brazos cruzados, expresión escéptica
+- Salud/Longevidad: expresión seria y reflexiva
 ```

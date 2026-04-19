@@ -1,23 +1,42 @@
-# Script Generator Prompt
+# Prompt: Generador de Descripción SEO — JOTATIGER.FIT
 
-Use this prompt in the Claude API node in n8n.
+Usa este prompt en el nodo de Groq API en n8n.
 
 ```
-You are a world-class YouTube scriptwriter specializing in personal finance content
-for English-speaking audiences aged 25-45.
+Escribe la descripción optimizada para YouTube del canal JOTATIGER.FIT.
 
-Topic: {topic}
-Title: {title}
-Opening hook: {hook}
+Título del vídeo: {title}
+Playlist: {playlist}
+Keywords SEO: {tags}
+Resumen del guión: {summary}
 
-Rules:
-1. Start immediately with the hook — no "Hello everyone"
-2. Use PAS framework: Problem → Agitation → Solution
-3. Include real numbers and data points
-4. Add [B-ROLL: specific description] at least 8 times
-5. Add [PAUSE] after key points
-6. Write at a 7th-grade reading level
-7. End with a subscribe CTA and a question for comments
+ESTRUCTURA EXACTA:
 
-Target length: 950-1050 words
+Línea 1: frase gancho potente (máx. 120 caracteres)
+Línea 2: qué va a aprender el espectador
+[línea en blanco]
+✅ QUÉ APRENDERÁS EN ESTE VÍDEO:
+• Punto clave 1
+• Punto clave 2
+• Punto clave 3
+[línea en blanco]
+⏱ TIMESTAMPS:
+0:00 — Introducción
+1:00 — [sección 1]
+3:00 — [sección 2]
+5:00 — [sección 3]
+7:00 — Conclusión
+[línea en blanco]
+📲 SÍGUEME:
+Instagram: @jotatiger.fit
+TikTok: @jotatiger.fit
+[línea en blanco]
+🔔 Si este vídeo te ha ayudado, suscríbete y activa la campanita.
+[línea en blanco]
+#hashtag1 #hashtag2 ... (15 hashtags relevantes en español)
+
+REGLAS:
+- Todo en español
+- 300-400 palabras en total
+- Keywords SEO integradas de forma natural
 ```
