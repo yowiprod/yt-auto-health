@@ -81,7 +81,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pexelsData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\n// Extraer URL del primer video HD de Pexels\nconst videos = pexelsData.videos || [];\nlet brollUrl = null;\n\nif (videos.length > 0) {\n  const video = videos[0];\n  const files = video.video_files || [];\n  // Preferir HD, luego SD\n  const hdFile = files.find(f => f.quality === 'hd' && f.width >= 1280);\n  const sdFile = files.find(f => f.quality === 'sd');\n  const chosen = hdFile || sdFile || files[0];\n  if (chosen) brollUrl = chosen.link;\n}\n\n// Construir body de HeyGen con B-Roll como fondo\nconst heygenInputs = {\n  character: {\n    type: 'avatar',\n    avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n    avatar_style: 'normal'\n  },\n  voice: {\n    type: 'text',\n    input_text: scriptData.cleanScript,\n    voice_id: '64cde72345cb463c9719781063d87787'\n  }\n};\n\n// Añadir fondo de video si se encontró B-Roll\nif (brollUrl) {\n  heygenInputs.background = {\n    type: 'video',\n    video: {\n      url: brollUrl,\n      play_style: 'fit_horizontal'\n    }\n  };\n}\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [heygenInputs],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    heygenBody: heygenBody,\n    brollUrl: brollUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
+        "jsCode": "const pexelsData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\n// Extraer URL del primer video HD de Pexels\nconst videos = pexelsData.videos || [];\nlet brollUrl = null;\n\nif (videos.length > 0) {\n  const video = videos[0];\n  const files = video.video_files || [];\n  const hdFile = files.find(f => f.quality === 'hd' && f.width >= 1280);\n  const sdFile = files.find(f => f.quality === 'sd');\n  const chosen = hdFile || sdFile || files[0];\n  if (chosen) brollUrl = chosen.link;\n}\n\n// Construir body de HeyGen\nconst heygenInputs = {\n  character: {\n    type: 'avatar',\n    avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n    avatar_style: 'normal'\n  },\n  voice: {\n    type: 'text',\n    input_text: scriptData.cleanScript,\n    voice_id: '64cde72345cb463c9719781063d87787'\n  }\n};\n\n// Añadir fondo de video si se encontró B-Roll\nif (brollUrl) {\n  heygenInputs.background = {\n    type: 'video',\n    video: {\n      url: brollUrl,\n      play_style: 'loop'\n    }\n  };\n}\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [heygenInputs],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    heygenBody: heygenBody,\n    brollUrl: brollUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
       },
       "id": "node-preparar-heygen",
       "name": "Preparar HeyGen con B-Roll",
@@ -132,7 +132,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ \"https://api.heygen.com/v1/video_status.get?video_id=\" + $('HeyGen - Crear Video').first().json.data.video_id }}",
+        "url": "={{ (() => { const vid = $('HeyGen - Crear Video').first().json?.data?.video_id; if (!vid) throw new Error('HeyGen no devolvió video_id. Revisa la respuesta del nodo HeyGen - Crear Video.'); return 'https://api.heygen.com/v1/video_status.get?video_id=' + vid; })() }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
@@ -153,7 +153,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst prepData = $('Preparar HeyGen con B-Roll').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nreturn [{\n  json: {\n    videoUrl: videoUrl,\n    status: status,\n    title: prepData.title,\n    description: prepData.description,\n    playlist: prepData.playlist,\n    videoReady: status === 'completed' && videoUrl !== null\n  }\n}];"
+        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst prepData = $('Preparar HeyGen con B-Roll').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nif (status === 'failed') {\n  throw new Error('HeyGen: el video falló. Revisa los parámetros.');\n}\nif (status !== 'completed' || !videoUrl) {\n  throw new Error(`HeyGen: video aún no listo (estado: ${status}). Espera más y vuelve a ejecutar desde \"HeyGen - Estado Video\".`);\n}\n\nreturn [{\n  json: {\n    videoUrl: videoUrl,\n    status: status,\n    title: prepData.title,\n    description: prepData.description,\n    playlist: prepData.playlist\n  }\n}];"
       },
       "id": "node-check-video",
       "name": "Verificar Video Listo",
