@@ -28,7 +28,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $env.GROQ_API_KEY }}"
+              "value": "Bearer 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"
             },
             {
               "name": "Content-Type",
@@ -67,7 +67,7 @@
           "parameters": [
             {
               "name": "X-Api-Key",
-              "value": "={{ $env.HEYGEN_API_KEY }}"
+              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
             },
             {
               "name": "Content-Type",
@@ -107,7 +107,7 @@
           "parameters": [
             {
               "name": "X-Api-Key",
-              "value": "={{ $env.HEYGEN_API_KEY }}"
+              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
             }
           ]
         },
@@ -174,11 +174,11 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "url": "https://api.telegram.org/bot8293761480:AAGcRLwZ5p0OJ_H6eRSK_Rq0rt3iDRB20S8/sendMessage",
         "authentication": "none",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\"chat_id\": $env.TELEGRAM_CHAT_ID, \"text\": \"🎬 Video publicado en YouTube!\\n\\n📹 Titulo: \" + $('Procesar Script').first().json.title + \"\\n\\n🔗 YouTube: https://youtube.com/watch?v=\" + $json.id + \"\\n\\n📋 Playlist: \" + $('Procesar Script').first().json.playlist + \"\\n\\n✅ Sube a TikTok e Instagram via Publer\"}) }}",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video publicado en YouTube!\\n\\n📹 Titulo: \" + $('Procesar Script').first().json.title + \"\\n\\n🔗 YouTube: https://youtube.com/watch?v=\" + $json.id + \"\\n\\n📋 Playlist: \" + $('Procesar Script').first().json.playlist + \"\\n\\n✅ Sube a TikTok e Instagram via Publer\"}) }}",
         "options": {}
       },
       "id": "node-telegram",
@@ -197,7 +197,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{ $env.PEXELS_API_KEY }}"
+              "value": "v5FIMWFvv0EGjPzfHV676zJKTox06wm9LnzF7YJDIwzGbDTl9tWQ7yOT"
             }
           ]
         },
