@@ -81,13 +81,71 @@
     },
     {
       "parameters": {
-        "jsCode": "const pexelsData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst videos = pexelsData.videos || [];\nlet brollUrl = null;\n\nif (videos.length > 0) {\n  const video = videos[0];\n  const files = video.video_files || [];\n  const hdFile = files.find(f => f.quality === 'hd' && f.width >= 1280);\n  const sdFile = files.find(f => f.quality === 'sd');\n  const chosen = hdFile || sdFile || files[0];\n  if (chosen) brollUrl = chosen.link;\n}\n\nconst heygenInputs = {\n  character: {\n    type: 'avatar',\n    avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n    avatar_style: 'normal'\n  },\n  voice: {\n    type: 'text',\n    input_text: scriptData.cleanScript,\n    voice_id: '64cde72345cb463c9719781063d87787'\n  }\n};\n\nheygenInputs.background = { type: 'color', value: '#1a1a2e' };\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [heygenInputs],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    heygenBody: heygenBody,\n    brollUrl: brollUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
+        "jsCode": "const pexels = $input.first().json;\nconst videos = pexels.videos || [];\nlet brollUrl = null;\n\nif (videos.length > 0) {\n  const files = videos[0].video_files || [];\n  const hd = files.find(f => f.quality === 'hd' && f.width >= 1280 && f.file_type === 'video/mp4');\n  const sd = files.find(f => f.quality === 'sd' && f.file_type === 'video/mp4');\n  const any = files.find(f => f.file_type === 'video/mp4');\n  const chosen = hd || sd || any || files[0];\n  if (chosen) brollUrl = chosen.link;\n}\n\nif (!brollUrl) throw new Error('Pexels: no se encontró vídeo MP4 disponible para B-Roll');\n\nreturn [{ json: { brollUrl } }];"
+      },
+      "id": "node-extract-broll",
+      "name": "Extraer URL B-Roll",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.brollUrl }}",
+        "authentication": "none",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "node-download-broll",
+      "name": "Descargar B-Roll",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://upload.heygen.com/v1/asset",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
+            },
+            {
+              "name": "Content-Type",
+              "value": "video/mp4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "node-upload-broll",
+      "name": "Subir B-Roll a HeyGen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const uploadData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst assetId = uploadData.data?.asset_id || uploadData.asset_id || null;\nif (!assetId) throw new Error('HeyGen upload: no se recibió asset_id. Respuesta: ' + JSON.stringify(uploadData));\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: scriptData.cleanScript,\n      voice_id: '64cde72345cb463c9719781063d87787'\n    },\n    background: {\n      type: 'video',\n      video: {\n        video_asset_id: assetId,\n        play_style: 'loop'\n      }\n    }\n  }],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    heygenBody,\n    assetId,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
       },
       "id": "node-preparar-heygen",
       "name": "Preparar HeyGen con B-Roll",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1000, 300]
+      "position": [1750, 300]
     },
     {
       "parameters": {
@@ -116,7 +174,7 @@
       "name": "HeyGen - Crear Video",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1250, 300]
+      "position": [2000, 300]
     },
     {
       "parameters": {
@@ -127,12 +185,12 @@
       "name": "Esperar 15 minutos",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [1500, 300]
+      "position": [2250, 300]
     },
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ (() => { const vid = $('HeyGen - Crear Video').first().json?.data?.video_id; if (!vid) throw new Error('HeyGen no devolvió video_id. Revisa la respuesta del nodo HeyGen - Crear Video.'); return 'https://api.heygen.com/v1/video_status.get?video_id=' + vid; })() }}",
+        "url": "={{ (() => { const vid = $('HeyGen - Crear Video').first().json?.data?.video_id; if (!vid) throw new Error('HeyGen no devolvió video_id.'); return 'https://api.heygen.com/v1/video_status.get?video_id=' + vid; })() }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
@@ -149,17 +207,17 @@
       "name": "HeyGen - Estado Video",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1750, 300]
+      "position": [2500, 300]
     },
     {
       "parameters": {
-        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst prepData = $('Preparar HeyGen con B-Roll').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nif (status === 'failed') {\n  throw new Error('HeyGen: el video falló. Revisa los parámetros.');\n}\nif (status !== 'completed' || !videoUrl) {\n  throw new Error(`HeyGen: video aún no listo (estado: ${status}). Espera más y vuelve a ejecutar desde \"HeyGen - Estado Video\".`);\n}\n\nreturn [{\n  json: {\n    videoUrl: videoUrl,\n    status: status,\n    title: prepData.title,\n    description: prepData.description,\n    playlist: prepData.playlist\n  }\n}];"
+        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst prepData = $('Preparar HeyGen con B-Roll').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nif (status === 'failed') throw new Error('HeyGen: el video falló.');\nif (status !== 'completed' || !videoUrl) throw new Error(`HeyGen: video aún no listo (estado: ${status}). Ejecuta desde \"HeyGen - Estado Video\".`);\n\nreturn [{\n  json: {\n    videoUrl,\n    status,\n    title: prepData.title,\n    description: prepData.description,\n    playlist: prepData.playlist\n  }\n}];"
       },
       "id": "node-check-video",
       "name": "Verificar Video Listo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 300]
+      "position": [2750, 300]
     },
     {
       "parameters": {
@@ -178,7 +236,7 @@
       "name": "Descargar Video",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2250, 300]
+      "position": [3000, 300]
     },
     {
       "parameters": {
@@ -195,7 +253,7 @@
       "name": "Subir Video a YouTube",
       "type": "n8n-nodes-base.youTube",
       "typeVersion": 1,
-      "position": [2500, 300],
+      "position": [3250, 300],
       "credentials": {
         "youTubeOAuth2Api": {
           "id": "youtube-oauth2",
@@ -210,14 +268,14 @@
         "authentication": "none",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video publicado en YouTube!\\n\\n📹 Titulo: \" + $('Verificar Video Listo').first().json.title + \"\\n\\n🔗 YouTube: https://youtube.com/watch?v=\" + $json.id + \"\\n\\n🎥 B-Roll: \" + ($('Preparar HeyGen con B-Roll').first().json.brollUrl ? 'Sí, incluido como fondo' : 'No disponible') + \"\\n\\n📋 Playlist: \" + $('Verificar Video Listo').first().json.playlist}) }}",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video publicado en YouTube!\\n\\n📹 Titulo: \" + $('Verificar Video Listo').first().json.title + \"\\n\\n🔗 YouTube: https://youtube.com/watch?v=\" + $json.id + \"\\n\\n🎥 B-Roll: incluido como fondo\\n\\n📋 Playlist: \" + $('Verificar Video Listo').first().json.playlist}) }}",
         "options": {}
       },
       "id": "node-telegram",
       "name": "Telegram - Notificacion",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2750, 300]
+      "position": [3500, 300]
     }
   ],
   "connections": {
@@ -231,6 +289,15 @@
       "main": [[{"node": "Pexels - Buscar B-Roll", "type": "main", "index": 0}]]
     },
     "Pexels - Buscar B-Roll": {
+      "main": [[{"node": "Extraer URL B-Roll", "type": "main", "index": 0}]]
+    },
+    "Extraer URL B-Roll": {
+      "main": [[{"node": "Descargar B-Roll", "type": "main", "index": 0}]]
+    },
+    "Descargar B-Roll": {
+      "main": [[{"node": "Subir B-Roll a HeyGen", "type": "main", "index": 0}]]
+    },
+    "Subir B-Roll a HeyGen": {
       "main": [[{"node": "Preparar HeyGen con B-Roll", "type": "main", "index": 0}]]
     },
     "Preparar HeyGen con B-Roll": {
