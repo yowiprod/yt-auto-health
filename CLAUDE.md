@@ -116,3 +116,4 @@ Before Claude Code starts editing, it should:
 - The v4 workflow will live in `n8n/workflow-jotatiger-v4.json` (pending creation). Do NOT touch v3.
 - Any change to the v4 pipeline must reference `PLAN-V4.md` for design decisions.
 - Logo watermark asset: `assets/jotatiger-logo.png`.
+- Intermediate test outputs, HeyGen downloads, and FFmpeg temp files go in `tmp/` (gitignored). Never commit test videos.
