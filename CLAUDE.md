@@ -106,3 +106,13 @@ Before Claude Code starts editing, it should:
 3. Run `ls n8n/` to see the current inventory.
 4. Ask which workflow version is the target of the change and confirm the scope before
    touching anything.
+
+---
+
+## v4 — Pipeline redesign
+
+- Main assembly script: `scripts/build-video.js`. All FFmpeg montage logic goes here.
+- Static assets (logo, base images): `assets/`. Do not hardcode paths outside this folder.
+- The v4 workflow will live in `n8n/workflow-jotatiger-v4.json` (pending creation). Do NOT touch v3.
+- Any change to the v4 pipeline must reference `PLAN-V4.md` for design decisions.
+- Logo watermark asset: `assets/jotatiger-logo.png`.
