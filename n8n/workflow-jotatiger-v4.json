@@ -211,7 +211,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst prepData = $('Preparar HeyGen con B-Roll').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nif (status === 'failed') throw new Error('HeyGen: el video falló.');\nif (status !== 'completed' || !videoUrl) throw new Error(`HeyGen: video aún no listo (estado: ${status}). Ejecuta desde \"HeyGen - Estado Video\".`);\n\nreturn [{\n  json: {\n    videoUrl,\n    status,\n    title: prepData.title,\n    description: prepData.description,\n    playlist: prepData.playlist\n  }\n}];"
+        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst prepData = $('Preparar HeyGen (chroma verde)').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nif (status === 'failed') throw new Error('HeyGen: el video falló.');\nif (status !== 'completed' || !videoUrl) throw new Error(`HeyGen: video aún no listo (estado: ${status}). Ejecuta desde \"HeyGen - Estado Video\".`);\n\nreturn [{\n  json: {\n    videoUrl,\n    status,\n    title: prepData.title,\n    description: prepData.description,\n    playlist: prepData.playlist\n  }\n}];"
       },
       "id": "node-check-video",
       "name": "Verificar Video Listo",
@@ -300,9 +300,9 @@
       "main": [[{"node": "Subir B-Roll a HeyGen", "type": "main", "index": 0}]]
     },
     "Subir B-Roll a HeyGen": {
-      "main": [[{"node": "Preparar HeyGen con B-Roll", "type": "main", "index": 0}]]
+      "main": [[{"node": "Preparar HeyGen (chroma verde)", "type": "main", "index": 0}]]
     },
-    "Preparar HeyGen con B-Roll": {
+    "Preparar HeyGen (chroma verde)": {
       "main": [[{"node": "HeyGen - Crear Video", "type": "main", "index": 0}]]
     },
     "HeyGen - Crear Video": {
