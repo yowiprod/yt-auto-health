@@ -241,9 +241,11 @@
     {
       "parameters": {
         "resource": "video",
+        "operation": "upload",
         "title": "={{ $('Verificar Video Listo').first().json.title }}",
         "regionCode": "ES",
         "categoryId": "27",
+        "binaryProperty": "data",
         "options": {
           "description": "={{ $('Verificar Video Listo').first().json.description }}",
           "privacyStatus": "public"
