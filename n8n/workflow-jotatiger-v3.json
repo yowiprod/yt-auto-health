@@ -1,5 +1,5 @@
 {
-  "name": "JOTATIGER.FIT - Auto YouTube v2 (con B-Roll)",
+  "name": "JOTATIGER.FIT - Auto YouTube v3 (Shorts/Reels con B-Roll)",
   "nodes": [
     {
       "parameters": {
@@ -38,7 +38,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres Juan Fit, experto en fitness. Hablas en español de España. Generas scripts de 800-1000 palabras para YouTube. Tono directo y cercano. Usa [PAUSA] entre secciones.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Genera un script sobre: 3 errores que te impiden perder grasa y como corregirlos hoy.\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2000\n}",
+        "jsonBody": "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres Juan Fit, experto en fitness y nutrición. Hablas en español de España. Generas scripts de 800-1000 palabras para YouTube. Tono directo, cercano y motivador. Usa [PAUSA] entre secciones.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Genera un script sobre: 5 alimentos que debes eliminar de tu dieta para perder grasa definitivamente. Para cada alimento explica por qué engorda y da una alternativa saludable concreta. Termina con una llamada a la acción para suscribirse.\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2000\n}",
         "options": {}
       },
       "id": "node-groq",
@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\nconst keywords = ['gym workout', 'fitness training', 'weight loss exercise'];\n\nconst lines = script.split('\\n').filter(l => l.trim().length > 5);\nlet title = '';\nfor (const line of lines) {\n  const clean = line.replace(/^[#*\\-_\"\\s]+/, '').replace(/[*_\"]+$/, '').trim();\n  if (clean.length > 10 && !clean.toLowerCase().includes('introduccion') && !clean.toLowerCase().includes('introducción')) {\n    title = clean.substring(0, 100);\n    break;\n  }\n}\nif (!title) title = '3 errores que te impiden perder grasa';\n\nconst description = `${cleanScript.substring(0, 500)}...\\n\\n🔔 Suscríbete para más consejos de fitness\\n👉 Sígueme en TikTok e Instagram: @juan.fit.tiger\\n\\n#fitness #salud #perdergrasa #ejercicio #nutricion #entrenamiento #juanfit`;\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title,\n    description: description,\n    brollKeyword: keywords[0],\n    playlist: 'Consejos Directos'\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\nconst keywords = ['healthy food nutrition', 'junk food', 'diet meal prep'];\n\nconst lines = script.split('\\n').filter(l => l.trim().length > 5);\nlet title = '';\nfor (const line of lines) {\n  const clean = line.replace(/^[#*\\-_\"\\s]+/, '').replace(/[*_\"]+$/, '').trim();\n  if (clean.length > 10 && !clean.toLowerCase().includes('introduccion') && !clean.toLowerCase().includes('introducción')) {\n    title = clean.substring(0, 100);\n    break;\n  }\n}\nif (!title) title = '5 alimentos que debes eliminar para perder grasa';\n\nconst description = `${cleanScript.substring(0, 500)}...\\n\\n🔔 Suscríbete para más consejos de fitness y nutrición\\n👉 Sígueme en TikTok e Instagram: @juan.fit.tiger\\n\\n#nutricion #alimentacion #perdergrasa #dieta #salud #fitness #adelgazar #comerSano #perderpeso #juanfit`;\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title,\n    description: description,\n    brollKeyword: keywords[0],\n    playlist: 'Nutrición y Dieta'\n  }\n}];"
       },
       "id": "node-process",
       "name": "Procesar Script",
@@ -60,7 +60,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ \"https://api.pexels.com/videos/search?query=\" + $json.brollKeyword + \"&per_page=5&orientation=landscape\" }}",
+        "url": "={{ \"https://api.pexels.com/videos/search?query=\" + $json.brollKeyword + \"&per_page=5&orientation=portrait\" }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
@@ -81,7 +81,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pexels = $input.first().json;\nconst videos = pexels.videos || [];\nlet brollUrl = null;\n\nif (videos.length > 0) {\n  const files = videos[0].video_files || [];\n  const hd = files.find(f => f.quality === 'hd' && f.width >= 1280 && f.file_type === 'video/mp4');\n  const sd = files.find(f => f.quality === 'sd' && f.file_type === 'video/mp4');\n  const any = files.find(f => f.file_type === 'video/mp4');\n  const chosen = hd || sd || any || files[0];\n  if (chosen) brollUrl = chosen.link;\n}\n\nif (!brollUrl) throw new Error('Pexels: no se encontró vídeo MP4 disponible para B-Roll');\n\nreturn [{ json: { brollUrl } }];"
+        "jsCode": "const pexels = $input.first().json;\nconst videos = pexels.videos || [];\nlet brollUrl = null;\n\nif (videos.length > 0) {\n  const files = videos[0].video_files || [];\n  const hd = files.find(f => f.quality === 'hd' && f.file_type === 'video/mp4');\n  const sd = files.find(f => f.quality === 'sd' && f.file_type === 'video/mp4');\n  const any = files.find(f => f.file_type === 'video/mp4');\n  const chosen = hd || sd || any || files[0];\n  if (chosen) brollUrl = chosen.link;\n}\n\nif (!brollUrl) throw new Error('Pexels: no se encontró vídeo MP4 disponible para B-Roll');\n\nreturn [{ json: { brollUrl } }];"
       },
       "id": "node-extract-broll",
       "name": "Extraer URL B-Roll",
@@ -139,7 +139,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const uploadData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst assetUrl = uploadData.data?.url || null;\nif (!assetUrl) throw new Error('HeyGen upload: no se recibió URL. Respuesta: ' + JSON.stringify(uploadData));\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: scriptData.cleanScript,\n      voice_id: '64cde72345cb463c9719781063d87787'\n    },\n    background: {\n      type: 'video',\n      url: assetUrl,\n      play_style: 'loop'\n    }\n  }],\n  dimension: { width: 1280, height: 720 },\n  aspect_ratio: '16:9',\n  test: false\n});\n\nreturn [{\n  json: {\n    heygenBody,\n    assetUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
+        "jsCode": "const uploadData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst assetUrl = uploadData.data?.url || null;\nif (!assetUrl) throw new Error('HeyGen upload: no se recibió URL. Respuesta: ' + JSON.stringify(uploadData));\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: scriptData.cleanScript,\n      voice_id: '64cde72345cb463c9719781063d87787'\n    },\n    background: {\n      type: 'video',\n      url: assetUrl,\n      play_style: 'loop'\n    }\n  }],\n  dimension: { width: 1080, height: 1920 },\n  aspect_ratio: '9:16',\n  test: false\n});\n\nreturn [{\n  json: {\n    heygenBody,\n    assetUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
       },
       "id": "node-preparar-heygen",
       "name": "Preparar HeyGen con B-Roll",
