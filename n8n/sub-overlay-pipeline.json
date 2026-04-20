@@ -1,0 +1,66 @@
+{
+  "name": "Sub: Overlay Pipeline (libass)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-overlay-start",
+      "name": "Start (from main)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'ffmpeg -i ' + $json.input_video + ' -vf \"ass=' + $json.title_ass_path + '\" -c:a copy -y ' + $json.output_title }}"
+      },
+      "id": "node-overlay-title",
+      "name": "Overlay Title (libass)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'ffmpeg -i ' + $json.output_title + ' -vf \"ass=' + $json.subtitle_ass_path + '\" -c:a copy -y ' + $json.output_subtitle }}"
+      },
+      "id": "node-overlay-subtitle",
+      "name": "Overlay Subtitle (libass)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'ffmpeg -i ' + $json.output_subtitle + ' -vf \"ass=' + $json.watermark_ass_path + '\" -c:a copy -y ' + $json.output_watermark }}"
+      },
+      "id": "node-overlay-watermark",
+      "name": "Overlay Watermark (libass)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Start (from main)": {
+      "main": [[{"node": "Overlay Title (libass)", "type": "main", "index": 0}]]
+    },
+    "Overlay Title (libass)": {
+      "main": [[{"node": "Overlay Subtitle (libass)", "type": "main", "index": 0}]]
+    },
+    "Overlay Subtitle (libass)": {
+      "main": [[{"node": "Overlay Watermark (libass)", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "sub-overlay-pipeline",
+  "versionId": "a1b2c3d4-0001-0001-0001-sub0overlay01",
+  "pinData": {},
+  "tags": [],
+  "triggerCount": 0
+}
