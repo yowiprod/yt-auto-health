@@ -1,0 +1,330 @@
+{
+  "name": "JOTATIGER.FIT - Auto YouTube v4 (Chroma Key + B-Roll sincronizado)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres Juan Fit, experto en fitness y nutrición. Hablas en español de España. Generas scripts de 800-1000 palabras para YouTube. Tono directo, cercano y motivador. Usa [PAUSA] entre secciones.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Genera un script sobre: 5 alimentos que debes eliminar de tu dieta para perder grasa definitivamente. Para cada alimento explica por qué engorda y da una alternativa saludable concreta. Termina con una llamada a la acción para suscribirse.\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2000\n}",
+        "options": {}
+      },
+      "id": "node-groq",
+      "name": "Groq - Generar Script",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst script = response.choices[0].message.content;\n\nconst cleanScript = script\n  .replace(/\\[B-ROLL:[^\\]]+\\]/g, '')\n  .replace(/\\[PAUSA\\]/g, '...')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\nconst keywords = ['healthy food nutrition', 'junk food', 'diet meal prep'];\n\nconst lines = script.split('\\n').filter(l => l.trim().length > 5);\nlet title = '';\nfor (const line of lines) {\n  const clean = line.replace(/^[#*\\-_\"\\s]+/, '').replace(/[*_\"]+$/, '').trim();\n  if (clean.length > 10 && !clean.toLowerCase().includes('introduccion') && !clean.toLowerCase().includes('introducción')) {\n    title = clean.substring(0, 100);\n    break;\n  }\n}\nif (!title) title = '5 alimentos que debes eliminar para perder grasa';\n\nconst description = `${cleanScript.substring(0, 500)}...\\n\\n🔔 Suscríbete para más consejos de fitness y nutrición\\n👉 Sígueme en TikTok e Instagram: @juan.fit.tiger\\n\\n#nutricion #alimentacion #perdergrasa #dieta #salud #fitness #adelgazar #comerSano #perderpeso #juanfit`;\n\nreturn [{\n  json: {\n    fullScript: script,\n    cleanScript: cleanScript.substring(0, 1500),\n    title: title,\n    description: description,\n    brollKeyword: keywords[0],\n    playlist: 'Nutrición y Dieta'\n  }\n}];"
+      },
+      "id": "node-process",
+      "name": "Procesar Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ \"https://api.pexels.com/videos/search?query=\" + $json.brollKeyword + \"&per_page=5&orientation=portrait\" }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "v5FIMWFvv0EGjPzfHV676zJKTox06wm9LnzF7YJDIwzGbDTl9tWQ7yOT"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-pexels",
+      "name": "Pexels - Buscar B-Roll",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pexels = $input.first().json;\nconst videos = pexels.videos || [];\nlet brollUrl = null;\n\nif (videos.length > 0) {\n  const files = videos[0].video_files || [];\n  const hd = files.find(f => f.quality === 'hd' && f.file_type === 'video/mp4');\n  const sd = files.find(f => f.quality === 'sd' && f.file_type === 'video/mp4');\n  const any = files.find(f => f.file_type === 'video/mp4');\n  const chosen = hd || sd || any || files[0];\n  if (chosen) brollUrl = chosen.link;\n}\n\nif (!brollUrl) throw new Error('Pexels: no se encontró vídeo MP4 disponible para B-Roll');\n\nreturn [{ json: { brollUrl } }];"
+      },
+      "id": "node-extract-broll",
+      "name": "Extraer URL B-Roll",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.brollUrl }}",
+        "authentication": "none",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "node-download-broll",
+      "name": "Descargar B-Roll",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://upload.heygen.com/v1/asset",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
+            },
+            {
+              "name": "Content-Type",
+              "value": "video/mp4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "node-upload-broll",
+      "name": "Subir B-Roll a HeyGen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const uploadData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst assetUrl = uploadData.data?.url || null;\nif (!assetUrl) throw new Error('HeyGen upload: no se recibió URL. Respuesta: ' + JSON.stringify(uploadData));\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: scriptData.cleanScript,\n      voice_id: '64cde72345cb463c9719781063d87787'\n    },\n    background: {\n      type: 'color',\n      value: '#00FF00'\n    }\n  }],\n  dimension: { width: 1080, height: 1920 },\n  aspect_ratio: '9:16',\n  test: false\n});\n\nreturn [{\n  json: {\n    heygenBody,\n    assetUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
+      },
+      "id": "node-preparar-heygen",
+      "name": "Preparar HeyGen (chroma verde)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1750, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.heygenBody }}",
+        "options": {}
+      },
+      "id": "node-heygen",
+      "name": "HeyGen - Crear Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "amount": 900,
+        "unit": "seconds"
+      },
+      "id": "node-wait",
+      "name": "Esperar 15 minutos",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (() => { const vid = $('HeyGen - Crear Video').first().json?.data?.video_id; if (!vid) throw new Error('HeyGen no devolvió video_id.'); return 'https://api.heygen.com/v1/video_status.get?video_id=' + vid; })() }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-heygen-status",
+      "name": "HeyGen - Estado Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2500, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const heygenData = $('HeyGen - Estado Video').first().json;\nconst prepData = $('Preparar HeyGen con B-Roll').first().json;\n\nconst videoUrl = heygenData.data?.video_url || null;\nconst status = heygenData.data?.status || 'unknown';\n\nif (status === 'failed') throw new Error('HeyGen: el video falló.');\nif (status !== 'completed' || !videoUrl) throw new Error(`HeyGen: video aún no listo (estado: ${status}). Ejecuta desde \"HeyGen - Estado Video\".`);\n\nreturn [{\n  json: {\n    videoUrl,\n    status,\n    title: prepData.title,\n    description: prepData.description,\n    playlist: prepData.playlist\n  }\n}];"
+      },
+      "id": "node-check-video",
+      "name": "Verificar Video Listo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2750, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.videoUrl }}",
+        "authentication": "none",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "node-download-video",
+      "name": "Descargar Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3000, 300]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Verificar Video Listo').first().json.title }}",
+        "regionCode": "ES",
+        "categoryId": "27",
+        "binaryProperty": "data",
+        "options": {
+          "description": "={{ $('Verificar Video Listo').first().json.description }}",
+          "privacyStatus": "public"
+        }
+      },
+      "id": "node-youtube-upload",
+      "name": "Subir Video a YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [3250, 300],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "youtube-oauth2",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8293761480:AAGcRLwZ5p0OJ_H6eRSK_Rq0rt3iDRB20S8/sendMessage",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\"chat_id\": \"8798553254\", \"text\": \"🎬 Video publicado en YouTube!\\n\\n📹 Titulo: \" + $('Verificar Video Listo').first().json.title + \"\\n\\n🔗 YouTube: https://youtube.com/watch?v=\" + $json.id + \"\\n\\n🎥 B-Roll: incluido como fondo\\n\\n📋 Playlist: \" + $('Verificar Video Listo').first().json.playlist}) }}",
+        "options": {}
+      },
+      "id": "node-telegram",
+      "name": "Telegram - Notificacion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3500, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{"node": "Groq - Generar Script", "type": "main", "index": 0}]]
+    },
+    "Groq - Generar Script": {
+      "main": [[{"node": "Procesar Script", "type": "main", "index": 0}]]
+    },
+    "Procesar Script": {
+      "main": [[{"node": "Pexels - Buscar B-Roll", "type": "main", "index": 0}]]
+    },
+    "Pexels - Buscar B-Roll": {
+      "main": [[{"node": "Extraer URL B-Roll", "type": "main", "index": 0}]]
+    },
+    "Extraer URL B-Roll": {
+      "main": [[{"node": "Descargar B-Roll", "type": "main", "index": 0}]]
+    },
+    "Descargar B-Roll": {
+      "main": [[{"node": "Subir B-Roll a HeyGen", "type": "main", "index": 0}]]
+    },
+    "Subir B-Roll a HeyGen": {
+      "main": [[{"node": "Preparar HeyGen con B-Roll", "type": "main", "index": 0}]]
+    },
+    "Preparar HeyGen con B-Roll": {
+      "main": [[{"node": "HeyGen - Crear Video", "type": "main", "index": 0}]]
+    },
+    "HeyGen - Crear Video": {
+      "main": [[{"node": "Esperar 15 minutos", "type": "main", "index": 0}]]
+    },
+    "Esperar 15 minutos": {
+      "main": [[{"node": "HeyGen - Estado Video", "type": "main", "index": 0}]]
+    },
+    "HeyGen - Estado Video": {
+      "main": [[{"node": "Verificar Video Listo", "type": "main", "index": 0}]]
+    },
+    "Verificar Video Listo": {
+      "main": [[{"node": "Descargar Video", "type": "main", "index": 0}]]
+    },
+    "Descargar Video": {
+      "main": [[{"node": "Subir Video a YouTube", "type": "main", "index": 0}]]
+    },
+    "Subir Video a YouTube": {
+      "main": [[{"node": "Telegram - Notificacion", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
