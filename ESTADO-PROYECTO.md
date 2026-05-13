@@ -90,4 +90,113 @@ n8n (orquestador, self-hosted)
 ---
 
 ## RAMA ACTIVA
-`claude/review-setup-YW2v7` (con commits
+`claude/review-setup-YW2v7` (con commits de Phase 1 + Phase 2 v4 + edits del 2026-05-13)
+
+---
+
+## SESIÓN 2026-05-13 — Resumen ejecutivo
+
+### Lo que se VALIDÓ (no se mueve)
+
+1. **HeyGen Video Agent funciona y entrega calidad alta** con avatar Photo Avatar IV (JuanFit). Test generó vídeo de 56s, estética "forense brutalista" naranja+negro, gancho inicial sin avatar + 3 mentiras alternando avatar/B-roll + cierre con logo. Coste por vídeo: ~20-30 créditos del wallet API.
+2. **Chroma key sobre fondo negro NO sirve** para este avatar (cabello + shorts oscuros se confunden con el fondo). Plan v4 original con FFmpeg compositing → DESCARTADO.
+3. **Submagic no es necesario** si HeyGen Video Agent ya hace captions + B-roll automático. Plan inicial de Phase 3 (FFmpeg + libass) tampoco necesario.
+4. **Credencial OAuth de YouTube** lista en n8n local (cliente `n8n-jotatiger` en Google Cloud, secret nuevo creado y guardado solo en n8n).
+5. **HeyGen tiene 2 pools de crédito separados**: web (plan mensual, ya pagado) y API (pay-as-you-go, hay que recargar). Workflows en n8n gastan API, no web.
+6. **Identidad Juan Fit fusionada** (ver `character.md` actualizado): crítico con la industria + recomienda productos que él toma con experiencia personal, sin claims terapéuticos.
+
+### Lo que se DECIDIÓ como plan
+
+**Stack final del pipeline automatizado:**
+- HeyGen Video Agent API (genera vídeo completo: avatar + B-roll Sora/Veo + captions)
+- Publer Business (3 cuentas anual 16,36€/mes) — distribuye a YouTube + Instagram + TikTok
+- n8n local — orquestación
+- Coste estimado total: ~100-200€/mes según volumen (15-20 vídeos/mes)
+
+**Mezcla de contenido** (objetivo 15 vídeos/mes):
+- 8-9 educación pura
+- 3 venta de producto (Evo Global, afiliación, productos propios futuros)
+- 2 hook viral con clip real del creador
+- 2 lifestyle/testimonio con clip real
+
+### Lo que está PENDIENTE de hacer el usuario antes de retomar
+
+1. **Suscribirse a Publer Business** (anual, 3 cuentas, ~196€/año)
+2. **Recargar wallet API de HeyGen** ($20-50 para pruebas iniciales)
+3. **Grabar banco de hooks reales**: una tarde de grabación con móvil vertical, 5-10 hooks (3-5s c/u) + 5-10 cierres (3-5s c/u). Incluir variantes con productos en mano (Té Detox EVO, suplementos, etc.) para los vídeos de tipo "Venta".
+
+### Lo que se hace en la PRÓXIMA SESIÓN (refactor técnico)
+
+1. Refactorizar `n8n/workflow-jotatiger-v4.json` al flujo nuevo:
+   - Schedule Trigger
+   - Decidir TIPO del vídeo (rotación o random ponderado: 55% Edu / 17% Venta / 13% Hook / 15% Lifestyle)
+   - Groq con prompt distinto por tipo
+   - HeyGen Video Agent API POST + polling
+   - Si tipo es Hook/Lifestyle/Venta → FFmpeg combina clip real del usuario + avatar
+   - Publer API POST → distribuye a YouTube + Instagram + TikTok
+   - Telegram notif
+2. Eliminar nodos Pexels (Video Agent ya genera B-roll).
+3. Mantener Groq script generator pero adaptado por tipo.
+4. Test end-to-end con un vídeo educativo primero (sin clip real, todo automatizado).
+
+### Archivos tocados en esta sesión
+
+- `PLAN-V4.md` — editado: cambio de chroma verde a negro (luego invalidado al descartar chroma)
+- `n8n/workflow-jotatiger-v4.json` — refactor de credenciales (Groq, Pexels, HeyGen ahora usan credenciales separadas en lugar de keys hardcoded; queda pendiente refactor completo a Video Agent)
+- `n8n/workflow-jotatiger-keys.json` — variante local con keys reales (gitignored)
+- `n8n/uploader-manual.json` — workflow simple de upload manual a YouTube (3 nodos)
+- `scripts/test-colorkey.bat` — script FFmpeg para validar colorkey (resultado: no viable con este avatar)
+- `character.md` — actualizado con línea editorial de recomendaciones + tipos de vídeo
+- `tmp/JOTATIGER.FIT_El_Fraude_de_la_Industria_Fitness_with_captions.mp4` — primer vídeo generado con Video Agent
+
+### Secrets que se REVOCARON en esta sesión
+
+Estaban hardcodeados en `n8n/workflow-jotatiger-v[234].json` commiteado al repo público:
+- Groq API key (revocada)
+- Pexels API key (revocada)
+- HeyGen API key (revocada)
+- Google OAuth client secret rotado en Google Cloud Console
+
+---
+
+## Estado del FORM TALLY (A MEDIO HACER al cerrar 2026-05-13)
+
+**Cuenta:** `info.juanfit@gmail.com` (login email + password directo, no OAuth)
+**URL editor:** https://tally.so/forms/rjG4Ep/edit
+**Estado:** DRAFT (sin publicar)
+**Spec completo:** ver `n8n/tally-form-spec.md`
+
+**Lo que está creado en el editor:**
+1. ✅ Título: "Asesoría personalizada — JOTATIGER.FIT"
+2. ✅ Pregunta 1: ¿Cómo te llamas? (Short answer)
+3. ✅ Pregunta 2: Tu email (Email)
+4. ✅ Pregunta 3: Tu WhatsApp (Phone)
+5. ⚠️ Pregunta 4: ¿Qué te interesa? (Multiple choice) — **BUG: opciones D-H mal**
+6. ⚠️ Pregunta 5a: Tu objetivo principal (Multiple choice) — **vacía sin opciones**
+
+**Bug pendiente de reparar (primer paso al retomar):**
+- Opción D actual: "Aún no lo tengo claroPerder grasa" — corregir a "🤔 Aún no lo tengo claro"
+- Eliminar opciones E, F, G, H (sobran, son de la pregunta 5a)
+- Añadir opciones a 5a: Perder grasa / Más energía / Mejor digestión / Ganar músculo / Mejorar mi salud general
+
+**Lo que falta crear:**
+- Resto de pregunta 5a + opcionales 6a
+- Sección 3B completa (5b, 6b, 7b)
+- Sección 3C completa (5c, 6c)
+- Sección 3D (5d)
+- Sección 4 (cierre + GDPR)
+- Lógica condicional para las 4 ramas
+
+**Lección aprendida del automation:** después de añadir opciones a un multiple choice, NO basta con Escape para salir del modo edición — hay que hacer click explícito fuera del bloque antes del siguiente `/comando`. Si no, los textos se concatenan con la última opción.
+
+---
+
+## Cómo retomar esto en nueva sesión Claude
+
+Primer mensaje sugerido para abrir nueva sesión:
+
+> *"Lee `ESTADO-PROYECTO.md` y `n8n/tally-form-spec.md`. Retomamos el form de Tally desde donde lo dejé: hay que reparar el bug de la pregunta 4 y completar el resto del form."*
+
+Eso reduce la fricción inicial a cero — la nueva sesión sabe exactamente dónde estamos y qué hacer.
+
+Los workflows en HEAD ya no contienen secrets en plain text. Pendiente: limpiar git history para que las keys viejas no estén en commits antiguos (opcional, ya están revocadas).
