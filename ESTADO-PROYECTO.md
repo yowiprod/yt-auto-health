@@ -159,35 +159,55 @@ Estaban hardcodeados en `n8n/workflow-jotatiger-v[234].json` commiteado al repo 
 
 ---
 
-## Estado del FORM TALLY (A MEDIO HACER al cerrar 2026-05-13)
+## Estado del FORM TALLY ✅ PUBLICADO (2026-05-13)
 
 **Cuenta:** `info.juanfit@gmail.com` (login email + password directo, no OAuth)
 **URL editor:** https://tally.so/forms/rjG4Ep/edit
-**Estado:** DRAFT (sin publicar)
+**URL pública:** https://tally.so/r/rjG4Ep
+**Estado:** PUBLISHED
 **Spec completo:** ver `n8n/tally-form-spec.md`
 
-**Lo que está creado en el editor:**
-1. ✅ Título: "Asesoría personalizada — JOTATIGER.FIT"
-2. ✅ Pregunta 1: ¿Cómo te llamas? (Short answer)
-3. ✅ Pregunta 2: Tu email (Email)
-4. ✅ Pregunta 3: Tu WhatsApp (Phone)
-5. ⚠️ Pregunta 4: ¿Qué te interesa? (Multiple choice) — **BUG: opciones D-H mal**
-6. ⚠️ Pregunta 5a: Tu objetivo principal (Multiple choice) — **vacía sin opciones**
+**Bloques creados (todos verificados en Preview):**
 
-**Bug pendiente de reparar (primer paso al retomar):**
-- Opción D actual: "Aún no lo tengo claroPerder grasa" — corregir a "🤔 Aún no lo tengo claro"
-- Eliminar opciones E, F, G, H (sobran, son de la pregunta 5a)
-- Añadir opciones a 5a: Perder grasa / Más energía / Mejor digestión / Ganar músculo / Mejorar mi salud general
+Sección 1 — Datos básicos (siempre visibles):
+- P1 ¿Cómo te llamas? — Short answer, obligatorio
+- P2 Tu email — Email, obligatorio
+- P3 Tu WhatsApp — Phone, obligatorio
 
-**Lo que falta crear:**
-- Resto de pregunta 5a + opcionales 6a
-- Sección 3B completa (5b, 6b, 7b)
-- Sección 3C completa (5c, 6c)
-- Sección 3D (5d)
-- Sección 4 (cierre + GDPR)
-- Lógica condicional para las 4 ramas
+Sección 2 — Bifurcación:
+- P4 ¿Qué te interesa? — Multiple choice, obligatorio, 4 opciones (Productos / Ganar dinero / Asesoramiento / No lo tengo claro)
 
-**Lección aprendida del automation:** después de añadir opciones a un multiple choice, NO basta con Escape para salir del modo edición — hay que hacer click explícito fuera del bloque antes del siguiente `/comando`. Si no, los textos se concatenan con la última opción.
+Sección 3A — Rama "Productos" (mostrar si P4 = Quiero probar productos):
+- P5a Tu objetivo principal — Multiple choice, obligatorio, 5 opciones
+- P6a ¿Estás tomando algún suplemento ahora? — Short answer, opcional
+
+Sección 3B — Rama "Ganar dinero" (mostrar si P4 = Quiero saber cómo ganar dinero):
+- P5b ¿Cuánto tiempo a la semana podrías dedicar? — Multiple choice, obligatorio, 4 opciones
+- P6b ¿Por qué te interesa? (opcional, máx 200 caracteres) — Long answer, opcional
+- P7b ¿Tienes experiencia en ventas o recomendación? — Multiple choice, opcional, 3 opciones
+
+Sección 3C — Rama "Asesoramiento" (mostrar si P4 = Quiero asesoramiento personal):
+- P5c ¿En qué área quieres asesoría? — Multiple choice, obligatorio, 5 opciones
+- P6c Cuéntanos tu situación actual en 1-2 frases — Long answer, opcional
+
+Sección 3D — Rama "No lo tengo claro" (mostrar si P4 = Aún no lo tengo claro):
+- P5d Cuéntanos qué te trajo a JOTATIGER.FIT — Long answer, opcional
+
+Sección 4 — Cierre común (siempre visible):
+- P8 ¿Cómo nos conociste? — Multiple choice, opcional, 5 opciones (YouTube / TikTok / Instagram / Recomendación / Otro)
+- P9 Texto aviso transparencia + RGPD (2 párrafos)
+- P10 He leído y acepto el aviso. Soy mayor de 18 años — Checkbox single, obligatorio
+
+**Lógica condicional (Tally Logic):** cada bloque condicional tiene `Hide block` por defecto + regla `When P4 Is <valor> Then Show blocks <ese bloque>`. Verificado en Preview que las 4 ramas muestran solo sus bloques.
+
+**Lecciones aprendidas del automation con Tally:**
+1. Tras añadir opciones a un multiple choice, hacer click explícito fuera del bloque antes del siguiente `/comando` — Escape no basta y los textos se concatenan con la última opción.
+2. Para abrir el menú contextual del bloque (donde está "Add conditional logic"): click en el drag handle (icono `⋮⋮` a la izquierda del título). Atajo equivalente: focus en el bloque + `Ctrl+Shift+L`. Los clicks programáticos directos sobre el ítem del menú NO funcionan en Tally (los rechaza por evento no-trusted); el shortcut sí.
+3. Las reglas `Show blocks` por sí solas NO ocultan los bloques: hay que marcar cada bloque condicional como `Hide` (atajo `Ctrl+Shift+H`) para que esté oculto por defecto y la regla Show lo revele.
+
+**Pendiente del usuario:**
+1. Configurar webhook (Settings → Integrations → Webhook) apuntando al endpoint de n8n cuando esté listo.
+2. Probar el form completo enviando una respuesta real y comprobar que llega como webhook.
 
 ---
 
@@ -195,8 +215,6 @@ Estaban hardcodeados en `n8n/workflow-jotatiger-v[234].json` commiteado al repo 
 
 Primer mensaje sugerido para abrir nueva sesión:
 
-> *"Lee `ESTADO-PROYECTO.md` y `n8n/tally-form-spec.md`. Retomamos el form de Tally desde donde lo dejé: hay que reparar el bug de la pregunta 4 y completar el resto del form."*
-
-Eso reduce la fricción inicial a cero — la nueva sesión sabe exactamente dónde estamos y qué hacer.
+> *"Lee `ESTADO-PROYECTO.md`. Retomamos el pipeline v4 desde el refactor de `n8n/workflow-jotatiger-v4.json` — el form de Tally ya está publicado."*
 
 Los workflows en HEAD ya no contienen secrets en plain text. Pendiente: limpiar git history para que las keys viejas no estén en commits antiguos (opcional, ya están revocadas).
