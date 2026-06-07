@@ -45,9 +45,9 @@ Evolucionar el pipeline actual (v3) para que los vídeos tengan un estilo visual
 
 - **Avatar:** Juan Fit (ID actual del v3)
 - **Voz:** Efrayn (español)
-- **Fondo:** VERDE CHROMA (#00FF00), modo "Color" de HeyGen
+- **Fondo:** NEGRO (#000000), nativo del Photo Avatar IV cuando no se le indica otro background válido.
 - **Formato de salida HeyGen:** 1080x1920 (vertical). Se reformateará luego en FFmpeg para las dos orientaciones.
-- **Razón del verde:** el avatar lleva camiseta y shorts azules. El verde no interfiere con la piel, ropa, ni con los calcetines/zapatillas blancas. El blanco (modo "Remove") sí daría problemas con esos detalles.
+- **Razón del negro (no verde):** Photo Avatar + Avatar IV ignora `background.type=color` por API (solo lo soportan los Studio Avatars de HeyGen). El render sale con su default, que es un negro uniforme — funcionalmente equivalente a un chroma para nuestro caso: el avatar lleva camiseta/shorts azules, calcetines/zapatillas blancas y piel humana, ningún elemento coincide con negro puro. Verificado contra doc oficial de HeyGen (`/docs/customize-video-background`, `/docs/create-webm-avatar-videos`). El WebM con alpha no aplica porque solo soporta Studio Avatars, no Photo Avatars custom como Juan Fit.
 
 ### B-roll dinámico (Pexels)
 
@@ -93,9 +93,9 @@ Evolucionar el pipeline actual (v3) para que los vídeos tengan un estilo visual
   - `format` ("horizontal" | "vertical")
 - **Salida:** `output.mp4` montado y listo para subir.
 - **Operaciones FFmpeg en pseudo-código:**
-  1. Cargar avatar, aplicar `chromakey=0x00FF00:0.3:0.1` (quitar verde)
+  1. Cargar avatar, aplicar `colorkey=0x000000:0.3:0.1` (quitar negro nativo del Photo Avatar IV — afinar `similarity`/`blend` durante validación para no morder el cabello)
   2. Cargar B-rolls, concatenarlos respetando los `start_seconds`/`end_seconds` de cada segmento
-  3. Aplicar `overlay` para poner el avatar (sin verde) encima del B-roll
+  3. Aplicar `overlay` para poner el avatar (sin negro) encima del B-roll
   4. Generar un título `.ass` con libass y overlay en los primeros 3 segundos
   5. Overlay del logo PNG en la esquina durante todo el vídeo
   6. Exportar al formato solicitado (escalar + crop según orientación)
@@ -145,11 +145,11 @@ El plan se construye en **7 fases pequeñas**, cada una probable en aislamiento 
 - Actualizar `CLAUDE.md` con las nuevas rutas y convenciones del v4
 - Commit y push
 
-### Fase 2 — HeyGen con fondo verde (30 min)
+### Fase 2 — HeyGen con fondo apto para chroma (30 min)
 
-- Modificar el nodo "Preparar HeyGen con B-Roll" del v3 para mandar `background.type = "color"` con `color = "#00FF00"` en lugar de vídeo.
+- Configurar el nodo "Preparar HeyGen" en v4 para no enviar B-roll (sin `assetUrl` ni `background.type=video`). El parámetro `background.type=color` es opcional: HeyGen lo ignora en Photo Avatar IV y devuelve negro nativo igualmente, así que se omite del payload para reducir ruido.
 - Probar manualmente una ejecución en n8n (sin FFmpeg todavía).
-- Verificar que el vídeo resultante tiene fondo verde limpio.
+- **Criterio de éxito (revisado):** el vídeo resultante tiene un fondo uniforme apto para colorkey en FFmpeg. En la práctica con Photo Avatar IV es negro liso. Validación funcional al final de Fase 3 con `colorkey=0x000000`.
 
 ### Fase 3 — FFmpeg: chroma key básico (1h)
 
@@ -207,7 +207,7 @@ Todo esto se puede añadir en v5, v6, etc.
 |---|---|
 | HeyGen no da timings en la respuesta API | Fallback: Whisper local o vía Colab gratis |
 | Pexels no encuentra B-roll para alguna keyword | Fallback: usar B-roll genérico del tema principal |
-| Chroma key de HeyGen sale con halo verde | Ajustar parámetros de FFmpeg (`chromakey`, `despill`), o pedir a HeyGen más resolución |
+| Colorkey muerde el cabello oscuro o las sombras del cuello | Bajar `similarity` (0.1-0.2) y subir `blend` (0.05-0.15). Si persiste, aplicar `despill` o caer a matting por ML como último recurso |
 | El PC local no aguanta render de FFmpeg | Usar presets rápidos (`-preset veryfast`), o mover el render a Colab |
 | El script falla en producción | Cada fase se prueba en aislamiento, no se avanza sin tener la anterior sólida |
 

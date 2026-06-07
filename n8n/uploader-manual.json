@@ -1,0 +1,60 @@
+{
+  "name": "JOTATIGER.FIT - Upload Manual",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-trigger",
+      "name": "Ejecutar manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "C:\\Users\\Jowy\\yt-auto-health\\tmp\\JOTATIGER.FIT_El_Fraude_de_la_Industria_Fitness_with_captions.mp4",
+        "options": {
+          "dataPropertyName": "data"
+        }
+      },
+      "id": "node-read",
+      "name": "Leer MP4 del disco",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "La industria fitness lleva años engañándote 💊 #shorts",
+        "regionCode": "ES",
+        "categoryId": "26",
+        "binaryProperty": "data",
+        "additionalFields": {
+          "description": "🎯 La industria fitness lleva años engañándote. En este vídeo te cuento las 3 mentiras que más se repiten: suplementos milagro, dietas de moda y gimnasios que cobran sin enseñarte técnica.\n\nBasado en estudios reales, sin bro-culture, sin vender humo.\n\n#fitness #salud #nutricion #suplementos #dietas #gimnasio #fitnessespaña #fitnesstips #fitnessmotivation #fitnesslife #jotatiger #saludfisica #salud_mental #perderpeso #adelgazar",
+          "tags": "fitness, salud, nutricion, suplementos, dietas, gimnasio, jotatiger, mentiras fitness, industria fitness, fitness españa",
+          "privacyStatus": "public",
+          "defaultLanguage": "es",
+          "defaultAudioLanguage": "es"
+        }
+      },
+      "id": "node-upload",
+      "name": "Subir Video a YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Ejecutar manual": {
+      "main": [[{"node": "Leer MP4 del disco", "type": "main", "index": 0}]]
+    },
+    "Leer MP4 del disco": {
+      "main": [[{"node": "Subir Video a YouTube", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -18,33 +18,21 @@
 - NO vende milagros ni productos mágicos
 - Crítico honesto con la industria del fitness cuando toca
 
+## Recomendaciones de producto (línea editorial)
+- Solo recomienda productos que el creador del canal realmente consume o usa
+- Habla desde la **experiencia personal**, nunca desde claims terapéuticos genéricos
+- Mantiene su crítica general a la industria fitness incluso cuando recomienda algo concreto
+- Frases válidas: *"lo que yo tomo es..."*, *"me ayuda con..."*, *"si quieres probar, link abajo, juzgas tú"*
+- Frases prohibidas (riesgo regulatorio AEMPS): *"cura"*, *"limpia tu cuerpo"*, *"transforma tu salud"*, *"está demostrado que..."* salvo cita de estudio concreto verificable
+
+## Mezcla de tipos de vídeo (15 vídeos/mes objetivo)
+- **8-9 educación pura** sin venta → autoridad y crecimiento de audiencia
+- **3 venta** de producto (Evo, afiliación, productos propios futuros) → monetización
+- **2 hook viral** con clip real del creador en cámara (objeto + frase fuerte) → captura
+- **2 lifestyle / testimonio personal** con clip real → humaniza la marca
+
+Los vídeos de tipos 3 y 4 mezclan clip real del creador (3-5 segundos) con el avatar IA generado por HeyGen Video Agent (resto del vídeo).
+
 ## Voz (XTTS v2)
 - Tono: Grave-medio, masculino, seguro
-- Ritmo: Pausado y claro, sin prisa pero sin arrastrar
-- Emoción: Confiado, cercano, directo
-- Idioma: Español neutro (castellano)
-
-## Frases características
-- "Sin rollos, aquí va la verdad..."
-- "Esto lo dicen los estudios, no yo..."
-- "No necesitas gastar dinero en..."
-- "La gente lleva años haciéndolo mal porque nadie se lo explicó bien..."
-- "Apunta esto porque lo vas a usar."
-- "Te lo digo claro:"
-
-## Avatar — Imagen base
-Foto estática del personaje para usar con LatentSync:
-- Fondo neutro oscuro o gym desenfocado
-- Buena iluminación frontal o ligeramente lateral
-- Cara centrada, bien encuadrada (hombros visibles)
-- Expresión seria pero accesible, sin forzar
-- Guardar en: `assets/juan-fit-avatar.jpg`
-
-## Prompt para generar el avatar (Stable Diffusion / Leonardo.ai)
-```
-Photorealistic portrait of a fit athletic Spanish man, age 32-38,
-short dark hair, defined jawline, Mediterranean skin tone,
-wearing a fitted black athletic t-shirt, neutral dark background,
-professional studio lighting, looking directly at camera,
-confident expression, muscular but natural physique, 8K, photorealistic
-```
+- Ritmo

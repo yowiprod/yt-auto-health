@@ -22,14 +22,11 @@
       "parameters": {
         "method": "POST",
         "url": "https://api.groq.com/openai/v1/chat/completions",
-        "authentication": "none",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer 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"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -61,16 +58,8 @@
       "parameters": {
         "method": "GET",
         "url": "={{ \"https://api.pexels.com/videos/search?query=\" + $json.brollKeyword + \"&per_page=5&orientation=portrait\" }}",
-        "authentication": "none",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "v5FIMWFvv0EGjPzfHV676zJKTox06wm9LnzF7YJDIwzGbDTl9tWQ7yOT"
-            }
-          ]
-        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "options": {}
       },
       "id": "node-pexels",
@@ -112,14 +101,11 @@
       "parameters": {
         "method": "POST",
         "url": "https://upload.heygen.com/v1/asset",
-        "authentication": "none",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "X-Api-Key",
-              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
-            },
             {
               "name": "Content-Type",
               "value": "video/mp4"
@@ -139,7 +125,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const uploadData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst assetUrl = uploadData.data?.url || null;\nif (!assetUrl) throw new Error('HeyGen upload: no se recibió URL. Respuesta: ' + JSON.stringify(uploadData));\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: scriptData.cleanScript,\n      voice_id: '64cde72345cb463c9719781063d87787'\n    },\n    background: {\n      type: 'color',\n      value: '#00FF00'\n    }\n  }],\n  dimension: { width: 1080, height: 1920 },\n  aspect_ratio: '9:16',\n  test: false,\n  use_avatar_iv_model: true\n});\n\nreturn [{\n  json: {\n    heygenBody,\n    assetUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
+        "jsCode": "const uploadData = $input.first().json;\nconst scriptData = $('Procesar Script').first().json;\n\nconst assetUrl = uploadData.data?.url || null;\nif (!assetUrl) throw new Error('HeyGen upload: no se recibió URL. Respuesta: ' + JSON.stringify(uploadData));\n\nconst heygenBody = JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: 'avatar',\n      avatar_id: '229e4844d3cb4df2ad0d8a79d4e082f0',\n      avatar_style: 'normal'\n    },\n    voice: {\n      type: 'text',\n      input_text: scriptData.cleanScript,\n      voice_id: '64cde72345cb463c9719781063d87787'\n    }\n  }],\n  dimension: { width: 1080, height: 1920 },\n  aspect_ratio: '9:16',\n  test: false,\n  use_avatar_iv_model: true\n});\n\nreturn [{\n  json: {\n    heygenBody,\n    assetUrl,\n    title: scriptData.title,\n    description: scriptData.description,\n    playlist: scriptData.playlist\n  }\n}];"
       },
       "id": "node-preparar-heygen",
       "name": "Preparar HeyGen (chroma verde)",
@@ -151,14 +137,11 @@
       "parameters": {
         "method": "POST",
         "url": "https://api.heygen.com/v2/video/generate",
-        "authentication": "none",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "X-Api-Key",
-              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -191,16 +174,8 @@
       "parameters": {
         "method": "GET",
         "url": "={{ (() => { const vid = $('HeyGen - Crear Video').first().json?.data?.video_id; if (!vid) throw new Error('HeyGen no devolvió video_id.'); return 'https://api.heygen.com/v1/video_status.get?video_id=' + vid; })() }}",
-        "authentication": "none",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Api-Key",
-              "value": "sk_V2_hgu_k9vEwRFbbns_wJQmgfuZuIIMW7WcEo6fBvoaxAdQcT17"
-            }
-          ]
-        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "options": {}
       },
       "id": "node-heygen-status",

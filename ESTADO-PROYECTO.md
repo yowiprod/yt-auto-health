@@ -90,4 +90,131 @@ n8n (orquestador, self-hosted)
 ---
 
 ## RAMA ACTIVA
-`claude/init-youtube-automation-5QNK5`
+`claude/review-setup-YW2v7` (con commits de Phase 1 + Phase 2 v4 + edits del 2026-05-13)
+
+---
+
+## SESIÓN 2026-05-13 — Resumen ejecutivo
+
+### Lo que se VALIDÓ (no se mueve)
+
+1. **HeyGen Video Agent funciona y entrega calidad alta** con avatar Photo Avatar IV (JuanFit). Test generó vídeo de 56s, estética "forense brutalista" naranja+negro, gancho inicial sin avatar + 3 mentiras alternando avatar/B-roll + cierre con logo. Coste por vídeo: ~20-30 créditos del wallet API.
+2. **Chroma key sobre fondo negro NO sirve** para este avatar (cabello + shorts oscuros se confunden con el fondo). Plan v4 original con FFmpeg compositing → DESCARTADO.
+3. **Submagic no es necesario** si HeyGen Video Agent ya hace captions + B-roll automático. Plan inicial de Phase 3 (FFmpeg + libass) tampoco necesario.
+4. **Credencial OAuth de YouTube** lista en n8n local (cliente `n8n-jotatiger` en Google Cloud, secret nuevo creado y guardado solo en n8n).
+5. **HeyGen tiene 2 pools de crédito separados**: web (plan mensual, ya pagado) y API (pay-as-you-go, hay que recargar). Workflows en n8n gastan API, no web.
+6. **Identidad Juan Fit fusionada** (ver `character.md` actualizado): crítico con la industria + recomienda productos que él toma con experiencia personal, sin claims terapéuticos.
+
+### Lo que se DECIDIÓ como plan
+
+**Stack final del pipeline automatizado:**
+- HeyGen Video Agent API (genera vídeo completo: avatar + B-roll Sora/Veo + captions)
+- Publer Business (3 cuentas anual 16,36€/mes) — distribuye a YouTube + Instagram + TikTok
+- n8n local — orquestación
+- Coste estimado total: ~100-200€/mes según volumen (15-20 vídeos/mes)
+
+**Mezcla de contenido** (objetivo 15 vídeos/mes):
+- 8-9 educación pura
+- 3 venta de producto (Evo Global, afiliación, productos propios futuros)
+- 2 hook viral con clip real del creador
+- 2 lifestyle/testimonio con clip real
+
+### Lo que está PENDIENTE de hacer el usuario antes de retomar
+
+1. **Suscribirse a Publer Business** (anual, 3 cuentas, ~196€/año)
+2. **Recargar wallet API de HeyGen** ($20-50 para pruebas iniciales)
+3. **Grabar banco de hooks reales**: una tarde de grabación con móvil vertical, 5-10 hooks (3-5s c/u) + 5-10 cierres (3-5s c/u). Incluir variantes con productos en mano (Té Detox EVO, suplementos, etc.) para los vídeos de tipo "Venta".
+
+### Lo que se hace en la PRÓXIMA SESIÓN (refactor técnico)
+
+1. Refactorizar `n8n/workflow-jotatiger-v4.json` al flujo nuevo:
+   - Schedule Trigger
+   - Decidir TIPO del vídeo (rotación o random ponderado: 55% Edu / 17% Venta / 13% Hook / 15% Lifestyle)
+   - Groq con prompt distinto por tipo
+   - HeyGen Video Agent API POST + polling
+   - Si tipo es Hook/Lifestyle/Venta → FFmpeg combina clip real del usuario + avatar
+   - Publer API POST → distribuye a YouTube + Instagram + TikTok
+   - Telegram notif
+2. Eliminar nodos Pexels (Video Agent ya genera B-roll).
+3. Mantener Groq script generator pero adaptado por tipo.
+4. Test end-to-end con un vídeo educativo primero (sin clip real, todo automatizado).
+
+### Archivos tocados en esta sesión
+
+- `PLAN-V4.md` — editado: cambio de chroma verde a negro (luego invalidado al descartar chroma)
+- `n8n/workflow-jotatiger-v4.json` — refactor de credenciales (Groq, Pexels, HeyGen ahora usan credenciales separadas en lugar de keys hardcoded; queda pendiente refactor completo a Video Agent)
+- `n8n/workflow-jotatiger-keys.json` — variante local con keys reales (gitignored)
+- `n8n/uploader-manual.json` — workflow simple de upload manual a YouTube (3 nodos)
+- `scripts/test-colorkey.bat` — script FFmpeg para validar colorkey (resultado: no viable con este avatar)
+- `character.md` — actualizado con línea editorial de recomendaciones + tipos de vídeo
+- `tmp/JOTATIGER.FIT_El_Fraude_de_la_Industria_Fitness_with_captions.mp4` — primer vídeo generado con Video Agent
+
+### Secrets que se REVOCARON en esta sesión
+
+Estaban hardcodeados en `n8n/workflow-jotatiger-v[234].json` commiteado al repo público:
+- Groq API key (revocada)
+- Pexels API key (revocada)
+- HeyGen API key (revocada)
+- Google OAuth client secret rotado en Google Cloud Console
+
+---
+
+## Estado del FORM TALLY ✅ PUBLICADO (2026-05-13)
+
+**Cuenta:** `info.juanfit@gmail.com` (login email + password directo, no OAuth)
+**URL editor:** https://tally.so/forms/rjG4Ep/edit
+**URL pública:** https://tally.so/r/rjG4Ep
+**Estado:** PUBLISHED
+**Spec completo:** ver `n8n/tally-form-spec.md`
+
+**Bloques creados (todos verificados en Preview):**
+
+Sección 1 — Datos básicos (siempre visibles):
+- P1 ¿Cómo te llamas? — Short answer, obligatorio
+- P2 Tu email — Email, obligatorio
+- P3 Tu WhatsApp — Phone, obligatorio
+
+Sección 2 — Bifurcación:
+- P4 ¿Qué te interesa? — Multiple choice, obligatorio, 4 opciones (Productos / Ganar dinero / Asesoramiento / No lo tengo claro)
+
+Sección 3A — Rama "Productos" (mostrar si P4 = Quiero probar productos):
+- P5a Tu objetivo principal — Multiple choice, obligatorio, 5 opciones
+- P6a ¿Estás tomando algún suplemento ahora? — Short answer, opcional
+
+Sección 3B — Rama "Ganar dinero" (mostrar si P4 = Quiero saber cómo ganar dinero):
+- P5b ¿Cuánto tiempo a la semana podrías dedicar? — Multiple choice, obligatorio, 4 opciones
+- P6b ¿Por qué te interesa? (opcional, máx 200 caracteres) — Long answer, opcional
+- P7b ¿Tienes experiencia en ventas o recomendación? — Multiple choice, opcional, 3 opciones
+
+Sección 3C — Rama "Asesoramiento" (mostrar si P4 = Quiero asesoramiento personal):
+- P5c ¿En qué área quieres asesoría? — Multiple choice, obligatorio, 5 opciones
+- P6c Cuéntanos tu situación actual en 1-2 frases — Long answer, opcional
+
+Sección 3D — Rama "No lo tengo claro" (mostrar si P4 = Aún no lo tengo claro):
+- P5d Cuéntanos qué te trajo a JOTATIGER.FIT — Long answer, opcional
+
+Sección 4 — Cierre común (siempre visible):
+- P8 ¿Cómo nos conociste? — Multiple choice, opcional, 5 opciones (YouTube / TikTok / Instagram / Recomendación / Otro)
+- P9 Texto aviso transparencia + RGPD (2 párrafos)
+- P10 He leído y acepto el aviso. Soy mayor de 18 años — Checkbox single, obligatorio
+
+**Lógica condicional (Tally Logic):** cada bloque condicional tiene `Hide block` por defecto + regla `When P4 Is <valor> Then Show blocks <ese bloque>`. Verificado en Preview que las 4 ramas muestran solo sus bloques.
+
+**Lecciones aprendidas del automation con Tally:**
+1. Tras añadir opciones a un multiple choice, hacer click explícito fuera del bloque antes del siguiente `/comando` — Escape no basta y los textos se concatenan con la última opción.
+2. Para abrir el menú contextual del bloque (donde está "Add conditional logic"): click en el drag handle (icono `⋮⋮` a la izquierda del título). Atajo equivalente: focus en el bloque + `Ctrl+Shift+L`. Los clicks programáticos directos sobre el ítem del menú NO funcionan en Tally (los rechaza por evento no-trusted); el shortcut sí.
+3. Las reglas `Show blocks` por sí solas NO ocultan los bloques: hay que marcar cada bloque condicional como `Hide` (atajo `Ctrl+Shift+H`) para que esté oculto por defecto y la regla Show lo revele.
+
+**Pendiente del usuario:**
+1. Configurar webhook (Settings → Integrations → Webhook) apuntando al endpoint de n8n cuando esté listo.
+2. Probar el form completo enviando una respuesta real y comprobar que llega como webhook.
+
+---
+
+## Cómo retomar esto en nueva sesión Claude
+
+Primer mensaje sugerido para abrir nueva sesión:
+
+> *"Lee `ESTADO-PROYECTO.md`. Retomamos el pipeline v4 desde el refactor de `n8n/workflow-jotatiger-v4.json` — el form de Tally ya está publicado."*
+
+Los workflows en HEAD ya no contienen secrets en plain text. Pendiente: limpiar git history para que las keys viejas no estén en commits antiguos (opcional, ya están revocadas).
